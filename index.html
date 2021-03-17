@@ -9,6 +9,10 @@
         grid-area: editor;
       }
 
+      .monaco-editor {
+        height: 18vh !important;
+      }
+
       .buttons {
         grid-area: buttons;
       }
@@ -40,12 +44,39 @@
         box-sizing: border-box;
         grid-gap: 2px;
       }
+
+      .loader {
+        z-index: 5;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgb(20, 20, 20);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition-duration: 1s;
+        font-size: 24pt;
+        color: whitesmoke;
+      }
+
+      .loader:not(.loading) {
+        background-color: transparent;
+        z-index: -1;
+        color: transparent;
+      }
+
+      canvas {
+        height: 82vh;
+      }
     </style>
   </head>
   <body>
+    <div class="loader loading">Loading ...</div>
     <div class="editor"></div>
     <div class="buttons">
-      <button class="btn open-btn">Open</button>
+      <button class="btn open-btn" disabled>Open</button>
       <button class="btn save-btn">Save</button>
       <button class="btn run-btn">Run</button>
       <input type="file" class="hidden" id="file-selector" accept=".py" />

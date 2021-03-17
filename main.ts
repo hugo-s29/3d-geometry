@@ -72,6 +72,8 @@ async function main() {
   //@ts-ignore
   await window.languagePluginLoader
 
+  document.querySelector('.loader').classList.remove('loading')
+
   //@ts-ignore
   const { pyodide } = window
 
@@ -131,6 +133,7 @@ async function main() {
         makeSuggestion({ model, pos, kind: CompletionItemKind.Function, label: 'line("AB")' }),
         makeSuggestion({ model, pos, kind: CompletionItemKind.Function, label: 'showVector("AB")' }),
         makeSuggestion({ model, pos, kind: CompletionItemKind.Function, label: 'arrow("AB")' }),
+        makeSuggestion({ model, pos, kind: CompletionItemKind.Function, label: 'rotate()' }),
         makeSuggestion({ model, pos, kind: CompletionItemKind.Function, label: 'rotate(2.0)' }),
         makeSuggestion({ model, pos, kind: CompletionItemKind.Function, label: 'dontRotate()' }),
       ],
@@ -160,21 +163,21 @@ async function main() {
     download(editor.getModel().getLinesContent().join('\n'), fileName)
   })
 
-  const fileinput: HTMLInputElement = document.querySelector('#file-selector')
-  document.querySelector('.open-btn').addEventListener('click', () => {
-    fileinput.click()
-    const fileChange = async (e: Event) => {
-      //@ts-ignore
-      const files = e.target.files as FileList
+  //   const fileinput: HTMLInputElement = document.querySelector('#file-selector')
+  //   document.querySelector('.open-btn').addEventListener('click', () => {
+  //     fileinput.click()
+  //     const fileChange = async (e: Event) => {
+  //       //@ts-ignore
+  //       const files = e.target.files as FileList
 
-      if (files.length > 0) {
-        editor.getModel().setValue(await files[0].text())
-      }
+  //       if (files.length > 0) {
+  //         editor.getModel().setValue(await files[0].text())
+  //       }
 
-      fileinput.removeEventListener('change', fileChange)
-    }
-    fileinput.addEventListener('change', fileChange)
-  })
+  //       fileinput.removeEventListener('change', fileChange)
+  //     }
+  //     fileinput.addEventListener('change', fileChange)
+  //   })
 
   const [lib, exportVariables, resetVariables] = await Promise.all([
     fetch(lib_file).then((r) => r.text()),
