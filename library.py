@@ -85,7 +85,7 @@ class Vector(object):
   def __rsub__(self, other):
     return other + (-self)
 
-  def __neg__(self, other):
+  def __neg__(self):
     return Vector(*(-a for a in self))
 
   def __str__(self):
@@ -126,6 +126,9 @@ class Vector(object):
   def to_array(self):
     return [c for c in self]
 
+  def to_vec(self):
+    return 'vec@dimension@(@values@)'.replace('@dimension@', str(len(self))).replace('@values@', ','.join([str(k) for k in self]))
+  
 def normalize(v):
   return v.normalized
 
@@ -135,40 +138,48 @@ def cross(a,b):
 def vector(l):
   return Vector(*l)
 
+def polar(θ, r):
+  x = math.cos(θ) * r
+  y = math.sin(θ) * r
+  return Vector(x, 0, y)
+
 class UnknownPointError(Exception):
   def __init__(self, point_name, function_name):
-    self.point_name = point_name
-    self.function_name = function_name
     Exception.__init__(self, "Unknow point '{point}' when calling function '{func}'".format(point=point_name, func=function_name))
+
+class TooManyPointsException(Exception):
+  def __init__(self, received, asked, function_name):
+    Exception.__init__(self, "Too many points used (received {received}, asked {asked}) when calling function '{func}'".format(received=received, asked=asked, func=function_name))
+
+class NotEnoughPointsException(Exception):
+  def __init__(self, received, asked, function_name):
+    Exception.__init__(self, "Not enough points used (received {received}, asked {asked}) when calling function '{func}'".format(received=received, asked=asked, func=function_name))
 
 class Point:
   def __init__(self, pos, name):
     self.position = pos
     self.name = name
+  
+  def to_dict(self):
+    return {
+      "position": self.position.to_array(),
+      "name": self.name
+    }
 
 class Shape:
   def __init__(self):
     self.points = []
-  
-  def sdf(self):
-    return """
-    float shapeSDF(vec3 p) {
-        return 0.0;
-    }
-    """
-  
-  def geometry(self):
-    return ["BoxGeometry", 2,2,2]
+    self.faces_data = []
 
 class Square(Shape):
   def __init__(self, points_names):
-    self.points = []
+    Shape.__init__(self)
 
     square = [
-      vector([-1.0,-1.0,0.0]),
-      vector([+1.0,-1.0,0.0]),
-      vector([+1.0,+1.0,0.0]),
-      vector([-1.0,+1.0,0.0]),
+      vector([-1.0,0.0,-1.0]),
+      vector([+1.0,0.0,-1.0]),
+      vector([+1.0,0.0,+1.0]),
+      vector([-1.0,0.0,+1.0]),
     ]
     for i in range(4):
       name= points_names[i]
@@ -179,16 +190,76 @@ class Square(Shape):
     for k in range(4):
       i = k
       j = (k+1) % 4
-      line(points_names[i] + point_names[j])
+      line(points_names[i] + points_names[j])
     
     global_shapes.append(self)
+
+class CustomShape(Shape):
+  def __init__(self):
+    self.points = []
+    self.planes = self.get_planes()
     
-  def geometry(self):
-    return ["BoxGeometry", 2,2,0]
+  def get_planes(self):
+    return []
+
+  def get_faces(self):
+    return []
+
+class RegularPolygon(Shape):
+  def __init__(self, points):
+    Shape.__init__(self)
+
+    needed_points = self.check_points_count()
+    func = self.get_func_name()
+
+    if needed_points == True:
+      needed_points = len(points)
+
+    if len(points) > needed_points:
+      raise TooManyPointsException(len(points), needed_points, func)
+    elif len(points) < needed_points:
+      raise NotEnoughPointsException(len(points), needed_points, func)
+
+
+    for i, name in enumerate(points):
+      θ = 2 * math.pi * float(i) / float(len(points))
+      pos = polar(θ, 1.0)
+      pt = Point(pos, name)
+      self.points.append(pt)
+      global_points[name] = pt
+    
+    for k in range(len(points)):
+      i = k
+      j = (k+1) % len(points)
+      line(points[i] + points[j])
+    
+    global_shapes.append(self)
+  
+  def check_points_count(self):
+    return True
+  
+  def get_func_name(self):
+    return self.__class__.__name__
+
+class Triangle(RegularPolygon):
+  def check_points_count(self):
+    return 3
+
+class Square(RegularPolygon):
+  def check_points_count(self):
+    return 4
+
+class Pentagon(RegularPolygon):
+  def check_points_count(self):
+    return 5
+
+class Hexagon(RegularPolygon):
+  def check_points_count(self):
+    return 6
 
 class Box(Shape):
   def __init__(self, points_names, w, h, d):
-    self.points = []
+    Shape.__init__(self)
 
     self.size = [w,h,d]
 
@@ -224,22 +295,54 @@ class Box(Shape):
 
     global_shapes.append(self)
 
-  def geometry(self):
-    w,h,d = self.size
-    return ["BoxGeometry", w,h,d]
+class Pyramid(CustomShape):
+  def __init__(self, points, base=Square):
+    S = Point(Vector(0,2,0),points[0])
+    global_points[S.name] = S
+    self.points = [S]
+    self.vertex = S
 
-  def sdf(self):
-    w,h,d = [str(f/2.0) for f in self.size]
-    return """
-    float vmax(vec3 v) {
-        return max(max(v.x, v.y), v.z);
-    }
+    self.base_shape = base_shape = base(points[1:])
 
-    float shapeSDF(vec3 p) {
-        return vmax(abs(p) - vec3(@w@,@h@,@d@));
-    }
+    for pt in base_shape.points:
+      line(pt.name + S.name)
 
-    """.replace('@w@', w).replace('@h@', h).replace('@d@', d)
+    global_shapes.append(self)
+    CustomShape.__init__(self)
+
+    self.faces_data = self.generate_faces_data()
+  
+  def generate_faces_data(self):
+    faces = []
+
+    for i in range(len(self.base_shape.points)):
+      j = (i+1) % len(self.base_shape.points)
+      A = self.base_shape.points[i]
+      B = self.base_shape.points[j]
+      C = self.vertex
+
+      n = get_plane_normal([A, B, C])
+      k = get_plane_constant(C, n)
+      # Plane(A, B, C, 1)
+      faces.append({
+        "normal": n,
+        "constant": k,
+        "points": [A, B, C]
+      })
+    
+    A = self.base_shape.points[0]
+    B = self.base_shape.points[2]
+    C = self.base_shape.points[1]
+    n = get_plane_normal([A, B, C])
+    k = get_plane_constant(C, n)
+    # Plane(A, B, C, 1)
+    faces.append({
+      "normal": n,
+      "constant": k,
+      "points": [A, B, C]
+    })
+    
+    return faces
 
 class Cube(Box):
   def __init__(self, points):
@@ -290,7 +393,14 @@ def midPoint(name, points):
     
 #     for i,name in enumerate(points):
       
-    
+def get_plane_normal(points):
+  a, b, c = [pt.position for pt in points]
+  direction = cross(b - a, c - a)
+  return normalize(direction)
+
+def get_plane_constant(pt, normal):
+  k = pt.position * normal
+  return k
 
 class Plane(Shape):
   def __init__(self, a, b, c,size):
@@ -302,9 +412,7 @@ class Plane(Shape):
     global_planes.append(self)
 
   def get_normal(self):
-    a, b, c = [pt.position for pt in self.points]
-    direction = cross(b - a, c - a)
-    return normalize(direction)
+    return get_plane_normal(self.points)
 
   def values(self, section = False):
     normal = self.get_normal().to_array()

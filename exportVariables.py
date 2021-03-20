@@ -6,8 +6,17 @@ result_points = json.dumps([
 result_shapes = json.dumps([
   {
     "points": [pt.name for pt in shape.points],
-    "geometry": shape.geometry(),
-    "sdf": shape.sdf()
+    "faces_data": [
+      {
+        "normal": face['normal'].to_array(),
+        "constant": face['constant'],
+        "points": [
+          pt.to_dict()
+          for pt in face['points']
+        ]
+      }
+      for face in shape.faces_data
+    ]
   }
   for shape in global_shapes
 ])

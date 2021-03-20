@@ -13,7 +13,9 @@ import download from 'js-file-download'
 
 const OrbitControls = _OrbitControls(THREE)
 
-const code = ``
+const code = `Pyramid('ABCDE')
+midPoint("I", "AB")
+plane("ABC", section=True)`
 
 class PlaneViewer extends THREE.Line {
   plane: THREE.Plane
@@ -163,22 +165,6 @@ async function main() {
     download(editor.getModel().getLinesContent().join('\n'), fileName)
   })
 
-  //   const fileinput: HTMLInputElement = document.querySelector('#file-selector')
-  //   document.querySelector('.open-btn').addEventListener('click', () => {
-  //     fileinput.click()
-  //     const fileChange = async (e: Event) => {
-  //       //@ts-ignore
-  //       const files = e.target.files as FileList
-
-  //       if (files.length > 0) {
-  //         editor.getModel().setValue(await files[0].text())
-  //       }
-
-  //       fileinput.removeEventListener('change', fileChange)
-  //     }
-  //     fileinput.addEventListener('change', fileChange)
-  //   })
-
   const [lib, exportVariables, resetVariables] = await Promise.all([
     fetch(lib_file).then((r) => r.text()),
     fetch(export_variables_file).then((r) => r.text()),
@@ -304,9 +290,14 @@ async function main() {
     while (texts.length > 0) texts.pop()
     while (objectMaterials.length > 0) objectMaterials.pop()
 
-    for (const [normal, a, b, c, section, size] of planes) {
-      const plane = new THREE.Plane(new THREE.Vector3(normal[0], normal[1], normal[2]))
+    const threePlanes: THREE.Plane[] = []
+
+    for (const [_normal, a, b, c, section, size] of planes) {
+      const normal = new THREE.Vector3(_normal[0], _normal[1], _normal[2])
+      const plane = new THREE.Plane(normal)
       plane.translate(new THREE.Vector3(a[0], a[1], a[2]))
+
+      threePlanes.push(plane)
 
       const color = randomColor()
 
@@ -318,74 +309,6 @@ async function main() {
       scene.add(plane_mesh)
     }
 
-    const mesh_material = (sdf: string, color: string) =>
-      new THREE.RawShaderMaterial({
-        vertexShader: `
-              precision mediump float;
-              attribute vec3 position;
-              uniform mat4 modelViewMatrix;
-              uniform mat4 projectionMatrix;
-
-              varying vec3 pos; 
-
-              void main() {
-                pos = position; 
-
-                vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
-                gl_Position = projectionMatrix * modelViewPosition; 
-              }`,
-        fragmentShader: `
-              precision mediump float;
-              varying vec3 pos;
-
-              uniform vec3 camera;
-              uniform vec3 plane_normal;
-              uniform float plane_constant;
-              uniform vec3 color;
-
-              const float epsilon = 0.001;
-              const float maxVal = 100.0;
-
-              float sdPlane( vec3 p, vec3 n, float h ) {
-                // n must be normalized
-                return dot(p,n) + h;
-              }
-              
-              ${sdf}
-
-              void main() {
-                vec3 position = camera;
-                vec3 direction = normalize(pos - camera);
-                float d = 0.0;
-
-                for(int steps = 0; steps < 1000; steps++){
-                  d = max(
-                    abs(sdPlane(position, plane_normal, plane_constant)), 
-                    shapeSDF(position)
-                  );
-
-                  if(d <= epsilon){
-                    gl_FragColor = vec4(color,0.7);
-                    break;
-                  }
-                  else if(d >= maxVal) {
-                    break;
-                  }
-
-                  position += d * direction;
-                }
-                if(d >= maxVal)
-                  discard;
-              }`,
-        uniforms: {
-          plane_normal: { value: new THREE.Vector3(0, 0, 0) },
-          plane_constant: { value: 0 },
-          camera: { value: camera.position },
-          color: { value: hexToRGB(color) },
-        },
-        transparent: true,
-        depthWrite: false,
-      })
 
     for (const [name, x, y, z] of points) {
       const sphere = new THREE.Mesh(point_geom, point_mate)
@@ -432,24 +355,13 @@ async function main() {
     }
 
     for (const shape of shapes) {
-      const geometry = shape.geometry[0]
-      const params = [...shape.geometry]
-      params.shift()
+      console.log(shape)
+      const faces = shape.faces
 
-      //@ts-ignore
-      const geom = new THREE[geometry](...params)
+      for (const plane of threePlanes) {
 
-      const materials = clippingPlanes.map(([plane, color]) => {
-        const mat = mesh_material(shape.sdf, color)
-        mat.uniforms.plane_normal.value = plane.normal
-        mat.uniforms.plane_constant.value = plane.constant
-        return mat
-      })
 
-      objectMaterials.push(...materials)
-
-      const meshes = materials.map((mat) => new THREE.Mesh(geom, mat))
-      if (meshes.length > 0) scene.add(...meshes)
+      }
     }
   }
 
