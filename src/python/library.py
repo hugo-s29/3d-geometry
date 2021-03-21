@@ -344,6 +344,10 @@ class Pyramid(CustomShape):
     
     return faces
 
+class Tetrahedron(Pyramid):
+  def __init__(self,name):
+    Pyramid.__init__(self, name, base=Triangle)
+
 class Cube(Box):
   def __init__(self, points):
     Box.__init__(self, points, 2.0, 2.0, 2.0)
@@ -416,7 +420,7 @@ class Plane(Shape):
 
   def values(self, section = False):
     normal = self.get_normal().to_array()
-    points = [pt.position.to_array() for pt in self.points]
+    points = [pt.to_dict() for pt in self.points]
 
     return [normal] + points + [section, self.size]
 

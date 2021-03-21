@@ -1,5 +1,5 @@
 result_points = json.dumps([
-  [pt.name] + pt.position.to_array()
+  pt.to_dict()
   for pt in global_points.values()
 ])
 

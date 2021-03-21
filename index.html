@@ -1,88 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <style>
-      .editor {
-        grid-area: editor;
-      }
 
-      .monaco-editor {
-        height: 18vh !important;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <style>
+    .editor {
+      grid-area: editor;
+    }
 
-      .buttons {
-        grid-area: buttons;
-      }
+    .monaco-editor {
+      height: 18vh !important;
+    }
 
-      .webgl {
-        grid-area: webgl;
-        width: 100%;
-        height: 100%;
-      }
+    .buttons {
+      grid-area: buttons;
+    }
 
-      .hidden {
-        display: none;
-      }
+    .webgl {
+      grid-area: webgl;
+      width: 100%;
+      height: 100%;
+    }
 
-      body {
-        overflow: hidden;
-        display: grid;
-        grid-template-areas:
-          'editor editor editor editor editor buttons'
-          'webgl webgl webgl webgl webgl webgl'
-          'webgl webgl webgl webgl webgl webgl'
-          'webgl webgl webgl webgl webgl webgl'
-          'webgl webgl webgl webgl webgl webgl'
-          'webgl webgl webgl webgl webgl webgl';
-        width: 100vw;
-        height: 100vh;
-        padding: 0;
-        margin: 0;
-        box-sizing: border-box;
-        grid-gap: 2px;
-      }
+    .hidden {
+      display: none;
+    }
 
-      .loader {
-        z-index: 5;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgb(20, 20, 20);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transition-duration: 1s;
-        font-size: 24pt;
-        color: whitesmoke;
-      }
+    body {
+      overflow: hidden;
+      display: grid;
+      grid-template-areas:
+        'editor editor editor editor editor buttons'
+        'webgl webgl webgl webgl webgl webgl'
+        'webgl webgl webgl webgl webgl webgl'
+        'webgl webgl webgl webgl webgl webgl'
+        'webgl webgl webgl webgl webgl webgl'
+        'webgl webgl webgl webgl webgl webgl';
+      width: 100vw;
+      height: 100vh;
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+      grid-gap: 2px;
+    }
 
-      .loader:not(.loading) {
-        background-color: transparent;
-        z-index: -1;
-        color: transparent;
-      }
+    .loader {
+      z-index: 5;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgb(20, 20, 20);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition-duration: 1s;
+      font-size: 24pt;
+      color: whitesmoke;
+    }
 
-      canvas {
-        height: 82vh;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="loader loading">Loading ...</div>
-    <div class="editor"></div>
-    <div class="buttons">
-      <button class="btn open-btn" disabled>Open</button>
-      <button class="btn save-btn">Save</button>
-      <button class="btn run-btn">Run</button>
-      <input type="file" class="hidden" id="file-selector" accept=".py" />
-    </div>
-    <canvas class="webgl"></canvas>
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.16.1/full/pyodide.js"></script>
-    <script src="./main.ts"></script>
-  </body>
+    .loader:not(.loading) {
+      background-color: transparent;
+      z-index: -1;
+      color: transparent;
+    }
+
+    canvas {
+      height: 82vh !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="loader loading">Loading ...</div>
+  <div class="editor"></div>
+  <div class="buttons">
+    <button class="btn open-btn" disabled>Open</button>
+    <button class="btn save-btn">Save</button>
+    <button class="btn run-btn">Run</button>
+    <input type="file" class="hidden" id="file-selector" accept=".py" />
+  </div>
+  <canvas class="webgl"></canvas>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.16.1/full/pyodide.js"></script>
+  <script src="./src/main.ts"></script>
+</body>
+
 </html>
