@@ -7,7 +7,7 @@ export interface IMarker {
 }
 
 export class Editor {
-  static DEFAULT_CODE = `Tetrahedron('SABC')`
+  static DEFAULT_CODE = "Tetrahedron('SABC')\nplane('ABC', section=True)"
 
   protected editor!: monaco.editor.IStandaloneCodeEditor
   protected runCode: () => any

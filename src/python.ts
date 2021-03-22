@@ -1,8 +1,8 @@
 //@ts-nocheck
 import lib_file from './python/library.py'
 import export_variables_file from './python/exportVariables.py'
-//@ts-check
 import reset_variables_file from './python/resetVariables.py'
+//@ts-check
 import { Vector3, Plane } from 'three'
 
 export interface IPoint {

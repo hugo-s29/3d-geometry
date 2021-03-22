@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import earcut from 'earcut'
 //@ts-ignore
-import triangulate from 'delaunay-triangulate'
+import points3dto2d from 'points-3d-to-2d'
 
 //@ts-ignore
 import _OrbitControls from 'three-orbit-controls'
@@ -13,7 +13,6 @@ import { Editor } from './editor'
 import { Python, IPlane } from './python'
 import { PlaneViewer } from './planeViewer'
 import { DomManager } from './domManager'
-import { DoubleSide } from 'three'
 
 
 const colornames = Object.keys(colors).filter((name) => name !== 'grey')
@@ -247,71 +246,73 @@ async function main() {
           // const mat = getMatrixOnPlane(plane)
 
           const triangulationPoints: THREE.Vector3[] = intersection
-          const _ctr = new THREE.Vector3();
-          const _plane = new THREE.Plane()
-          const _q = new THREE.Quaternion();
-          const _y = new THREE.Vector3();
-          const _x = new THREE.Vector3();
+          // const _ctr = new THREE.Vector3();
+          // const _plane = new THREE.Plane()
+          // const _q = new THREE.Quaternion();
+          // const _y = new THREE.Vector3();
+          // const _x = new THREE.Vector3();
 
-          const X = new THREE.Vector3(1.0, 0.0, 0.0);
-          const Y = new THREE.Vector3(0.0, 1.0, 0.0);
-          const Z = new THREE.Vector3(0.0, 0.0, 1.0);
+          // const X = new THREE.Vector3(1.0, 0.0, 0.0);
+          // const Y = new THREE.Vector3(0.0, 1.0, 0.0);
+          // const Z = new THREE.Vector3(0.0, 0.0, 1.0);
 
-          const _tmp = new THREE.Vector3();
+          // const _tmp = new THREE.Vector3();
 
-          const _basis = new THREE.Matrix4();
+          // const _basis = new THREE.Matrix4();
 
-          // compute centroid
-          _ctr.setScalar(0.0);
-          for (const pt of triangulationPoints)
-            _ctr.add(pt);
-          _ctr.multiplyScalar(1.0 / triangulationPoints.length);
+          // // compute centroid
+          // _ctr.setScalar(0.0);
+          // for (const pt of triangulationPoints)
+          //   _ctr.add(pt);
+          // _ctr.multiplyScalar(1.0 / triangulationPoints.length);
 
-          // compute face normal
-          _plane.setFromCoplanarPoints(_ctr, triangulationPoints[0], triangulationPoints[1]);
-          const _z = _plane.normal;
+          // // compute face normal
+          // _plane.setFromCoplanarPoints(_ctr, triangulationPoints[0], triangulationPoints[1]);
+          // const _z = _plane.normal;
 
-          // compute basis
-          _q.setFromUnitVectors(Z, _z);
-          _x.copy(X).applyQuaternion(_q);
-          _y.crossVectors(_x, _z);
-          _y.normalize();
-          _basis.makeBasis(_x, _y, _z);
-          _basis.setPosition(_ctr);
+          // // compute basis
+          // _q.setFromUnitVectors(Z, _z);
+          // _x.copy(X).applyQuaternion(_q);
+          // _y.crossVectors(_x, _z);
+          // _y.normalize();
+          // _basis.makeBasis(_x, _y, _z);
+          // _basis.setPosition(_ctr);
 
-          // project the 3D points on the 2D plane
-          const projPoints = [];
-          for (const pt of triangulationPoints) {
-            _tmp.subVectors(pt, _ctr);
-            projPoints.push(new THREE.Vector2(_tmp.dot(_x), _tmp.dot(_y)));
-          }
+          // // project the 3D points on the 2D plane
+          // const projPoints = [];
+          // for (const pt of triangulationPoints) {
+          //   _tmp.subVectors(pt, _ctr);
+          //   projPoints.push(new THREE.Vector2(_tmp.dot(_x), _tmp.dot(_y)));
+          // }
 
           // create the geometry (Three.js triangulation with ShapeBufferGeometry)
-          const shape = new THREE.Shape(projPoints.reverse());
-          const geometry = new THREE.ShapeBufferGeometry(shape);
+          // const shape = new THREE.Shape(projPoints);
+          // const geometry = new THREE.ShapeBufferGeometry(shape);
 
           // transform geometry back to the initial coordinate system
-          geometry.applyMatrix4(_basis);
+          // geometry.applyMatrix4(_basis);
 
           // const triangulationVertices = [projPoints.map(pt => pt.toArray())].flat(Infinity)
-          // const intersectionGeometry = new THREE.BufferGeometry()
+          const intersectionGeometry = new THREE.BufferGeometry()
 
-          // const triangles = earcut(triangulationVertices, [], 2)
-          // console.log(triangles, projPoints)
+          const triangulationVertices = points3dto2d(intersection.map(pt => pt.toArray())).points
+          const data = earcut.flatten([triangulationVertices])
+          const triangles = earcut(data.vertices, data.holes, data.dimensions)
+          console.log(triangles, data, triangulationVertices)
 
-          // intersectionGeometry.setIndex(triangles)
-          // intersectionGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(triangulationVertices), 2))
+          intersectionGeometry.setIndex(triangles.flat())
+          intersectionGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(intersection.map(pt => pt.toArray()).flat()), 3))
           // intersectionGeometry.applyMatrix4(_basis);
-          // const intersectionMesh = new THREE.Points(intersectionGeometry, new THREE.LineBasicMaterial({
-          //   side: THREE.DoubleSide,
-          //   color: 0x00ff00
-          // }))
-          // scene.add(intersectionMesh)
+          const intersectionMesh = new THREE.Mesh(intersectionGeometry, new THREE.LineBasicMaterial({
+            side: THREE.DoubleSide,
+            color: 0x00ff00
+          }))
+          scene.add(intersectionMesh)
 
-          scene.add(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
-            color,
-            side: THREE.DoubleSide
-          })))
+          // scene.add(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+          //   color,
+          //   side: THREE.DoubleSide
+          // })))
         }
       }
     }

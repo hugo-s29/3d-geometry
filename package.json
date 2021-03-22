@@ -18,8 +18,10 @@
     "js-file-download": "^0.4.12",
     "monaco-editor": "^0.21.3",
     "normalize-path-scale": "^2.0.0",
+    "points-3d-to-2d": "^0.1.5",
     "poly2tri": "^1.5.0",
     "three": "^0.125.1",
-    "three-orbit-controls": "^82.1.0"
+    "three-orbit-controls": "^82.1.0",
+    "triangulate": "^0.1.5"
   }
 }
